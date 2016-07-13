@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" version="3.1.0" client="site" method="upgrade">
+    <name>Re-submit Transaction ID</name>
+    <author>Oluwasayo Oyedepo</author>
+    <version>1.0.0</version>
+    <description>If your online payment was successful and you were not automatically credited with SMS units, submit your transaction ID below to get credited immediately.</description>
+    <files>
+        <filename>mod_voguepay.xml</filename>
+        <filename module="mod_voguepay">mod_voguepay.php</filename>
+        <filename>index.html</filename>
+        <filename>helper.php</filename>
+        <filename>tmpl/default.php</filename>
+        <filename>tmpl/index.html</filename>
+    </files>
+    <config>
+    </config>
+</extension>
