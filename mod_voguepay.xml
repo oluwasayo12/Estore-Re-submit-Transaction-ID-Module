@@ -4,6 +4,7 @@
     <author>Oluwasayo Oyedepo</author>
     <version>1.0.0</version>
     <description>If your online payment was successful and you were not automatically credited with SMS units, submit your transaction ID below to get credited immediately.</description>
+    
     <files>
         <filename>mod_voguepay.xml</filename>
         <filename module="mod_voguepay">mod_voguepay.php</filename>
@@ -13,5 +14,12 @@
         <filename>tmpl/index.html</filename>
     </files>
     <config>
+        <fields name="params">
+                 <fieldset name="basic">
+                
+                  <field name="merchant_id"  type="text" default="Merchant ID" label="Enter Voguepay Merchant ID" description="Enter Voguepay Merchant ID" />
+            </fieldset>
+                
+       </fields>
     </config>
 </extension>
