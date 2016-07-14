@@ -24,6 +24,7 @@ class ModVoguepayHelper{
 
 
         if(isset($_POST['submit'])){
+        $website_merchant_id = $params->get('merchant_id');
         $transaction_id = $_POST['transaction_id'];
 
         $xml = file_get_contents('https://voguepay.com/?v_transaction_id='.$_POST['transaction_id'].'&type=xml&demo=true');
@@ -39,86 +40,91 @@ class ModVoguepayHelper{
         $transaction_id = $transaction['transaction_id'];
         $merchant_ref = $transaction['merchant_ref'];
         $status = $transaction['status'];
-        //return  $status;
-            if(trim(strtolower($status)) == 'approved'  ){
+            if ($website_merchant_id != $merchant_id) {
+                return "INVALID TRANSACTION ID";
+            }
+            else{
+                //return  $status;
+                if(trim(strtolower($status)) == 'approved'  ){
 
-                $db = JFactory::getDbo();
-                $query = $db->getQuery(true); 
-                $columns = array('tx_user_id', 'tx_unit', 'tx_status' );
-                $query->select($columns)
-                ->from($db->quoteName('#__spc_transactions')) 
-                ->where($db->quoteName('tx_id').'='.$merchant_ref); 
-                $db->setQuery($query); 
-                $result = $db->loadObject();
-
-                $tx_user_id = $result->tx_user_id;
-                $tx_unit = $result->tx_unit;
-                $tx_status = $result->tx_status;
-
-                if ($tx_status === 'Approved') {
-                    return "Your transaction has already been approved";
-                }
-                elseif($tx_status === 'Pending'){
+                    $db = JFactory::getDbo();
                     $query = $db->getQuery(true); 
-                    $columns = array('user_id', 'wallet' );
+                    $columns = array('tx_user_id', 'tx_unit', 'tx_status' );
                     $query->select($columns)
-                    ->from($db->quoteName('#__users_xtra')) 
-                    ->where($db->quoteName('user_id').'='.$tx_user_id); 
+                    ->from($db->quoteName('#__spc_transactions')) 
+                    ->where($db->quoteName('tx_id').'='.$merchant_ref); 
                     $db->setQuery($query); 
                     $result = $db->loadObject();
 
+                    $tx_user_id = $result->tx_user_id;
+                    $tx_unit = $result->tx_unit;
+                    $tx_status = $result->tx_status;
 
-                    $wallet = $result->wallet;
-                    // //adding the unit (old + NEW)
-                    $newbalance= $wallet + $tx_unit;
-                    //Updating the users_xtra table
-                    $query = $db->getQuery(true);
-                    // Fields to update.
-                    $fields = $db->quoteName('wallet') . ' = '.$newbalance;
-                    // Conditions for which records should be updated.
-                    $conditions = array(
-                    $db->quoteName('user_id') . ' = '. $tx_user_id 
-                    );
-
-                    $query->update($db->quoteName('#__users_xtra'))->set($fields)->where($conditions);
-
-                    $db->setQuery($query);
-
-                    $result = $db->execute();
-
-                    if ($result < 1) {
-                        return "account not yet updated ";
+                    if ($tx_status === 'Approved') {
+                        return "Your transaction has already been approved";
                     }
-
-                    else{
-                        $db = JFactory::getDbo();
-
+                    elseif($tx_status === 'Pending'){
                         $query = $db->getQuery(true); 
-                        $columns = array('tx_user_id', 'tx_unit', 'tx_status' );
+                        $columns = array('user_id', 'wallet' );
                         $query->select($columns)
-                        ->from($db->quoteName('#__spc_transactions')) 
-                        ->where($db->quoteName('tx_id').'='.$merchant_ref); 
+                        ->from($db->quoteName('#__users_xtra')) 
+                        ->where($db->quoteName('user_id').'='.$tx_user_id); 
                         $db->setQuery($query); 
                         $result = $db->loadObject();
 
-                        $tx_user_id = $result->tx_user_id;
-                        //Changing the status of the transaction in the spc transactions table from pending to approved
+
+                        $wallet = $result->wallet;
+                        // //adding the unit (old + NEW)
+                        $newbalance= $wallet + $tx_unit;
+                        //Updating the users_xtra table
                         $query = $db->getQuery(true);
-                        $status="Approved";
-                     
-                        $query= "UPDATE #__spc_transactions SET `tx_status` = 'Approved' , `tx_balance_after` = '$newbalance' WHERE `tx_user_id` = $tx_user_id AND `tx_id` = $merchant_ref ";
+                        // Fields to update.
+                        $fields = $db->quoteName('wallet') . ' = '.$newbalance;
+                        // Conditions for which records should be updated.
+                        $conditions = array(
+                        $db->quoteName('user_id') . ' = '. $tx_user_id 
+                        );
+
+                        $query->update($db->quoteName('#__users_xtra'))->set($fields)->where($conditions);
+
                         $db->setQuery($query);
-                        $result = $db->execute();                        
+
+                        $result = $db->execute();
 
                         if ($result < 1) {
-                            echo "Transaction was not completed";
+                            return "account not yet updated ";
                         }
 
                         else{
-                            echo "Your Account has been updated with $tx_unit units";
+                            $db = JFactory::getDbo();
+
+                            $query = $db->getQuery(true); 
+                            $columns = array('tx_user_id', 'tx_unit', 'tx_status' );
+                            $query->select($columns)
+                            ->from($db->quoteName('#__spc_transactions')) 
+                            ->where($db->quoteName('tx_id').'='.$merchant_ref); 
+                            $db->setQuery($query); 
+                            $result = $db->loadObject();
+
+                            $tx_user_id = $result->tx_user_id;
+                            //Changing the status of the transaction in the spc transactions table from pending to approved
+                            $query = $db->getQuery(true);
+                            $status="Approved";
+                         
+                            $query= "UPDATE #__spc_transactions SET `tx_status` = 'Approved' , `tx_balance_after` = '$newbalance' WHERE `tx_user_id` = $tx_user_id AND `tx_id` = $merchant_ref ";
+                            $db->setQuery($query);
+                            $result = $db->execute();                        
+
+                            if ($result < 1) {
+                                return "Transaction was not completed";
+                            }
+
+                            else{
+                                return "Your Account has been updated with $tx_unit units";
+                            }
                         }
                     }
-                }
+                }   
             }
         }
     }
